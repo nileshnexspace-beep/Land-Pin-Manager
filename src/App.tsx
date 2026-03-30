@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Land Pin Manager - Main Application Entry (v1.0.4)
+// Eezily R1/R2/R3 Plots Mapping - Main Application Entry (v1.0.4)
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
@@ -27,7 +27,7 @@ function Login() {
     <div className="flex h-screen items-center justify-center bg-neutral-50">
       <div className="bg-white p-8 rounded-xl shadow-sm border border-neutral-200 text-center max-w-sm w-full">
         <MapPin className="mx-auto h-12 w-12 text-blue-600 mb-4" />
-        <h1 className="text-2xl font-bold text-neutral-900 mb-2">Land Pin Manager</h1>
+        <h1 className="text-2xl font-bold text-neutral-900 mb-2">Eezily R1/R2/R3 Plots Mapping</h1>
         <p className="text-neutral-500 mb-6">Sign in to manage your plots and generate client links.</p>
         <button
           onClick={handleLogin}

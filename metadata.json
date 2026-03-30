@@ -1,5 +1,5 @@
 {
-  "name": "Land Pin Manager",
-  "description": "Manage land plots with Google pins, owner details, and generate client-safe shareable links.",
+  "name": "Eezily R1/R2/R3 Plots Mapping",
+  "description": "Eezily R1/R2/R3 Plots Mapping tool for managing land plots with Google pins, owner details, and shareable links.",
   "requestFramePermissions": []
 }

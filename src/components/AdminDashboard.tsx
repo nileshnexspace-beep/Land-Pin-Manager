@@ -316,7 +316,7 @@ export default function AdminDashboard() {
           <div>
             <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
               <MapPin className="text-blue-600" />
-              Land Pin Manager
+              Eezily R1/R2/R3 Plots Mapping
             </h1>
             <p className="text-sm text-neutral-500 mt-1">Manage plots and client links</p>
           </div>
