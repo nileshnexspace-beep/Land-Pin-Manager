@@ -8,6 +8,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from './firebase';
+import { APP_VERSION } from './version';
 import AdminDashboard from './components/AdminDashboard';
 import SharedPlotView from './components/SharedPlotView';
 import { MapPin } from 'lucide-react';
@@ -34,6 +35,7 @@ function Login() {
         >
           Sign in with Google
         </button>
+        <div className="mt-4 text-[10px] text-neutral-300">v{APP_VERSION}</div>
       </div>
     </div>
   );
