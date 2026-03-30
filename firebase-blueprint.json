@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Plot": {
+      "title": "Plot",
+      "description": "Public details of a land plot.",
+      "type": "object",
+      "properties": {
+        "lat": { "type": "number", "description": "Latitude" },
+        "lng": { "type": "number", "description": "Longitude" },
+        "details": { "type": "string", "description": "Description of the land" },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "authorUid": { "type": "string", "description": "UID of the user who created the plot" }
+      },
+      "required": ["lat", "lng", "details", "authorUid"]
+    },
+    "PlotOwner": {
+      "title": "PlotOwner",
+      "description": "Private owner details of a land plot.",
+      "type": "object",
+      "properties": {
+        "ownerName": { "type": "string", "description": "Name of the owner" },
+        "ownerNumber": { "type": "string", "description": "Contact number of the owner" },
+        "authorUid": { "type": "string", "description": "UID of the user who created the plot" }
+      },
+      "required": ["ownerName", "ownerNumber", "authorUid"]
+    },
+    "AllowedEmail": {
+      "title": "AllowedEmail",
+      "description": "Authorized team members who can access the dashboard.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "Email address of the team member" },
+        "role": { "type": "string", "description": "Role of the team member (admin or member)" },
+        "addedBy": { "type": "string", "description": "Email of the admin who added this user" },
+        "createdAt": { "type": "string", "description": "When the user was added" }
+      },
+      "required": ["email", "role", "addedBy", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/plots/{plotId}": {
+      "schema": { "$ref": "#/entities/Plot" },
+      "description": "Public plot details"
+    },
+    "/plot_owners/{plotId}": {
+      "schema": { "$ref": "#/entities/PlotOwner" },
+      "description": "Private owner details, document ID matches the plotId"
+    },
+    "/allowed_emails/{email}": {
+      "schema": { "$ref": "#/entities/AllowedEmail" },
+      "description": "Stores authorized team members by email."
+    }
+  }
+}

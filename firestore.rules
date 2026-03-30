@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: plots
+    // Document ID: {plotId}
+    // Fields:
+    //   - lat: number (required)
+    //   - lng: number (required)
+    //   - details: string (required, < 5000 chars)
+    //   - documents: list (optional, max 10 items)
+    //   - authorUid: string (required, immutable)
+    //
+    // Collection: plot_owners
+    // Document ID: {plotId}
+    // Fields:
+    //   - ownerName: string (required, < 100 chars)
+    //   - ownerNumber: string (required, < 50 chars)
+    //   - authorUid: string (required, immutable)
+    //
+    // ===============================================================
+    // Collection: allowed_emails
+    // Document ID: {email}
+    // Fields:
+    //   - email: string (required)
+    //   - role: string (required, 'admin' or 'member')
+    //   - addedBy: string (required)
+    //   - createdAt: string (required)
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isBootstrapAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.email == 'nileshhirpara811@gmail.com';
+    }
+
+    function getTeamMember() {
+      return get(/databases/$(database)/documents/allowed_emails/$(request.auth.token.email));
+    }
+
+    function isTeamMember() {
+      return isAuthenticated() && (
+        isBootstrapAdmin() || 
+        exists(/databases/$(database)/documents/allowed_emails/$(request.auth.token.email))
+      );
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        isBootstrapAdmin() || 
+        (isTeamMember() && getTeamMember().data.role == 'admin')
+      );
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function uidUnchanged() {
+      return !('authorUid' in request.resource.data) ||
+        request.resource.data.authorUid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('authorUid' in request.resource.data) ||
+        request.resource.data.authorUid == resource.data.authorUid;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Domain Validators
+    function isValidPlot(data) {
+      return hasRequiredFields(['lat', 'lng', 'details', 'authorUid']) &&
+             data.lat is number &&
+             data.lng is number &&
+             validStringLength('details', 0, 5000) &&
+             (!('documents' in data) || (data.documents is list && data.documents.size() <= 10));
+    }
+
+    function isValidPlotOwner(data) {
+      return hasRequiredFields(['ownerName', 'ownerNumber', 'authorUid']) &&
+             validStringLength('ownerName', 0, 100) &&
+             validStringLength('ownerNumber', 0, 50);
+    }
+
+    function isValidAllowedEmail(data) {
+      return hasRequiredFields(['email', 'role', 'addedBy', 'createdAt']) &&
+             data.email is string &&
+             data.role in ['admin', 'member'] &&
+             data.addedBy is string &&
+             data.createdAt is string;
+    }
+
+    match /allowed_emails/{email} {
+      allow get: if isAuthenticated() && request.auth.token.email == email;
+      allow list: if isTeamMember();
+      allow create, update: if isAdmin() && isValidAllowedEmail(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /plots/{plotId} {
+      // Publicly readable so clients can see the shared plot
+      allow get: if true;
+      allow list: if isTeamMember();
+      
+      allow create: if isTeamMember() && 
+                    isValidPlot(request.resource.data) && 
+                    uidUnchanged();
+                    
+      allow update: if isTeamMember() && 
+                    isValidPlot(request.resource.data) && 
+                    uidNotModified();
+                    
+      allow delete: if isTeamMember();
+    }
+
+    match /plot_owners/{plotId} {
+      // Team members can read all plot owners
+      allow read: if isTeamMember();
+      
+      allow create: if isTeamMember() && 
+                    isValidPlotOwner(request.resource.data) && 
+                    uidUnchanged();
+                    
+      allow update: if isTeamMember() && 
+                    isValidPlotOwner(request.resource.data) && 
+                    uidNotModified();
+                    
+      allow delete: if isTeamMember();
+    }
+  }
+}

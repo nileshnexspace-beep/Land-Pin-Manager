@@ -1,0 +1,5 @@
+{
+  "name": "Land Pin Manager",
+  "description": "Manage land plots with Google pins, owner details, and generate client-safe shareable links.",
+  "requestFramePermissions": []
+}
