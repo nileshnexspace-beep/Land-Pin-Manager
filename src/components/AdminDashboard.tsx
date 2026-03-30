@@ -259,8 +259,8 @@ export default function AdminDashboard() {
   };
 
   const copyShareLink = (id: string) => {
-    const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
-    const url = `${window.location.origin}${baseUrl}#/share/${id}`;
+    const pathname = window.location.pathname.endsWith('/') ? window.location.pathname : `${window.location.pathname}/`;
+    const url = `${window.location.origin}${pathname}#/share/${id}`;
     navigator.clipboard.writeText(url);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
