@@ -11,7 +11,7 @@ import { auth } from './firebase';
 import { APP_VERSION } from './version';
 import AdminDashboard from './components/AdminDashboard';
 import SharedPlotView from './components/SharedPlotView';
-import { MapPin } from 'lucide-react';
+import Logo from './components/Logo';
 
 function Login() {
   const handleLogin = async () => {
@@ -25,17 +25,17 @@ function Login() {
 
   return (
     <div className="flex h-screen items-center justify-center bg-neutral-50">
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-neutral-200 text-center max-w-sm w-full">
-        <MapPin className="mx-auto h-12 w-12 text-blue-600 mb-4" />
-        <h1 className="text-2xl font-bold text-neutral-900 mb-2">Eezily R1/R2/R3 Plots Mapping</h1>
-        <p className="text-neutral-500 mb-6">Sign in to manage your plots and generate client links.</p>
+      <div className="bg-white p-8 rounded-2xl shadow-xl border border-neutral-200 text-center max-w-md w-full mx-4">
+        <Logo className="justify-center mb-8" variant="dark" />
+        <h1 className="text-2xl font-bold text-neutral-900 mb-2">Plots Mapping Tool</h1>
+        <p className="text-neutral-500 mb-8">Sign in to manage your plots and generate client links.</p>
         <button
           onClick={handleLogin}
-          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
         >
           Sign in with Google
         </button>
-        <div className="mt-4 text-[10px] text-neutral-300">v{APP_VERSION}</div>
+        <div className="mt-6 text-[10px] text-neutral-300 uppercase tracking-widest font-bold">v{APP_VERSION}</div>
       </div>
     </div>
   );

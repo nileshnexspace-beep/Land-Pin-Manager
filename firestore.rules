@@ -144,8 +144,10 @@ service cloud.firestore {
     }
 
     match /plot_owners/{plotId} {
+      // Publicly readable so clients can see the contact info
+      allow get: if true;
       // Team members can read all plot owners
-      allow read: if isTeamMember();
+      allow list: if isTeamMember();
       
       allow create: if isTeamMember() && 
                     isValidPlotOwner(request.resource.data) && 

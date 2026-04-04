@@ -6,6 +6,8 @@ import { db, auth, storage } from '../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, query, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject, listAll, uploadBytesResumable } from 'firebase/storage';
 import { signOut } from 'firebase/auth';
+import Logo from './Logo';
+import { APP_VERSION } from '../version';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDp7t8pm5AiaY5HdnegA9_csUIqlD3HXao';
 
@@ -42,6 +44,7 @@ export default function AdminDashboard() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [selectedPlotIds, setSelectedPlotIds] = useState<string[]>([]);
   
   // Team Management State
   const [userRole, setUserRole] = useState<'admin' | 'member' | 'unauthorized' | 'loading'>('loading');
@@ -422,6 +425,30 @@ export default function AdminDashboard() {
     return matchesSearch && matchesTag && matchesSize && matchesLocality;
   });
 
+  const handleShareSelected = () => {
+    if (selectedPlotIds.length === 0) return;
+    const ids = selectedPlotIds.join(',');
+    const shareUrl = `${window.location.origin}${window.location.pathname}#/share/${ids}`;
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedId('multi');
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const togglePlotSelection = (id: string) => {
+    setSelectedPlotIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllFiltered = () => {
+    const allIds = filteredPlots.map(p => p.id);
+    if (selectedPlotIds.length === allIds.length) {
+      setSelectedPlotIds([]);
+    } else {
+      setSelectedPlotIds(allIds);
+    }
+  };
+
   if (userRole === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center bg-neutral-50">
@@ -456,31 +483,31 @@ export default function AdminDashboard() {
     <div className="flex h-screen bg-neutral-50">
       {/* Sidebar */}
       <div className="w-96 bg-white border-r border-neutral-200 flex flex-col shadow-sm z-10">
-        <div className="p-6 border-b border-neutral-200 flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-              <MapPin className="text-blue-600" />
-              Eezily R1/R2/R3 Plots Mapping
-            </h1>
-            <p className="text-sm text-neutral-500 mt-1">Manage plots and client links</p>
-          </div>
-          <div className="flex items-center gap-1">
-            {userRole === 'admin' && (
+        <div className="p-6 border-b border-neutral-200 bg-neutral-900 text-white">
+          <div className="flex justify-between items-center mb-1">
+            <Logo variant="light" />
+            <div className="flex items-center gap-1">
+              {userRole === 'admin' && (
+                <button 
+                  onClick={() => setShowTeamModal(true)}
+                  className="p-2 text-neutral-400 hover:text-blue-400 hover:bg-white/10 rounded-lg transition-colors"
+                  title="Team Settings"
+                >
+                  <Users size={20} />
+                </button>
+              )}
               <button 
-                onClick={() => setShowTeamModal(true)}
-                className="p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Team Settings"
+                onClick={() => signOut(auth)}
+                className="p-2 text-neutral-400 hover:text-red-400 hover:bg-white/10 rounded-lg transition-colors"
+                title="Sign Out"
               >
-                <Users size={20} />
+                <LogOut size={20} />
               </button>
-            )}
-            <button 
-              onClick={() => signOut(auth)}
-              className="p-2 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Sign Out"
-            >
-              <LogOut size={20} />
-            </button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-neutral-400">Plots Mapping Tool</p>
+            <span className="text-[10px] text-neutral-600 font-bold">v{APP_VERSION}</span>
           </div>
         </div>
 
@@ -591,18 +618,56 @@ export default function AdminDashboard() {
               </div>
 
               <div className="mt-6">
-                <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-4">
-                  Saved Plots ({filteredPlots.length})
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">
+                    Saved Plots ({filteredPlots.length})
+                  </h2>
+                  <button
+                    onClick={selectAllFiltered}
+                    className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest"
+                  >
+                    {selectedPlotIds.length === filteredPlots.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
+
+                {selectedPlotIds.length > 0 && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                    <span className="text-xs font-medium text-blue-700">
+                      {selectedPlotIds.length} plots selected
+                    </span>
+                    <button
+                      onClick={handleShareSelected}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                      {copiedId === 'multi' ? <Check size={14} /> : <Share2 size={14} />}
+                      {copiedId === 'multi' ? 'Link Copied!' : 'Share Selected'}
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {filteredPlots.map((plot) => (
-                    <div key={plot.id} className="p-4 rounded-xl border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <div 
+                      key={plot.id} 
+                      className={`p-4 rounded-xl border transition-all ${
+                        selectedPlotIds.includes(plot.id) 
+                          ? 'border-blue-400 bg-blue-50/30 shadow-md ring-1 ring-blue-400' 
+                          : 'border-neutral-200 bg-white shadow-sm hover:shadow-md'
+                      }`}
+                    >
                       <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-bold text-neutral-900">
-                            {plot.societyName ? `${plot.societyName} - ${plot.unitNumber || ''}` : (plot.contactName || 'Unnamed Plot')}
-                          </h3>
-                          <div className="flex flex-wrap gap-1 mt-1">
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedPlotIds.includes(plot.id)}
+                            onChange={() => togglePlotSelection(plot.id)}
+                            className="mt-1 h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <div>
+                            <h3 className="font-bold text-neutral-900">
+                              {plot.societyName ? `${plot.societyName} - ${plot.unitNumber || ''}` : (plot.contactName || 'Unnamed Plot')}
+                            </h3>
+                            <div className="flex flex-wrap gap-1 mt-1">
                             {plot.locality && (
                               <span className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded flex items-center gap-1">
                                 <MapPin size={8} /> {plot.locality}
@@ -635,7 +700,8 @@ export default function AdminDashboard() {
                             <p className="text-xs text-neutral-500 font-medium mt-1">{plot.contactName}</p>
                           )}
                         </div>
-                        <div className="flex items-center gap-1">
+                      </div>
+                      <div className="flex items-center gap-1">
                           <button
                             onClick={() => startEditing(plot)}
                             className="p-1.5 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
@@ -752,7 +818,7 @@ export default function AdminDashboard() {
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       placeholder="Enter locality name"
                     />
-                    {showLocalitySuggestions && locality.length > 0 && (
+                    {showLocalitySuggestions && (
                       <div className="absolute z-[1100] w-full mt-1 bg-white border border-neutral-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
                         {Array.from(new Set(plots.map(p => p.locality).filter(Boolean)))
                           .filter(loc => (loc as string).toLowerCase().includes(locality.toLowerCase()) && loc !== locality)
@@ -769,6 +835,10 @@ export default function AdminDashboard() {
                               {loc as string}
                             </button>
                           ))}
+                        {Array.from(new Set(plots.map(p => p.locality).filter(Boolean)))
+                          .filter(loc => (loc as string).toLowerCase().includes(locality.toLowerCase()) && loc !== locality).length === 0 && locality.length === 0 && (
+                            <div className="px-4 py-2 text-xs text-neutral-400 italic">Start typing for suggestions...</div>
+                          )}
                       </div>
                     )}
                   </div>
