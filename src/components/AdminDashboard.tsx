@@ -4,7 +4,7 @@ import { Plot } from '../types';
 import { MapPin, Upload, Share2, Check, FileText, LogOut, Edit, Trash2, Users, Plus, X, Search } from 'lucide-react';
 import { db, auth, storage } from '../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, query, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject, listAll, uploadBytesResumable } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject, listAll } from 'firebase/storage';
 import { signOut } from 'firebase/auth';
 import Logo from './Logo';
 import { APP_VERSION } from '../version';
@@ -309,34 +309,21 @@ export default function AdminDashboard() {
       let documents = editingPlotId ? (plots.find(p => p.id === editingPlotId)?.documents || []) : [];
       
       if (files && files.length > 0) {
-        console.log(`Starting upload of ${files.length} files...`);
-        const uploadPromises = Array.from(files).map((file: File) => {
-          return new Promise<{ name: string, url: string }>((resolve, reject) => {
-            const storageRef = ref(storage, `plots/${plotId}/${file.name}`);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-
-            uploadTask.on('state_changed', 
-              (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
-              }, 
-              (error) => {
-                console.error("Upload failed for", file.name, error);
-                reject(new Error(`Failed to upload ${file.name}: ${error.message}`));
-              }, 
-              async () => {
-                try {
-                  const url = await getDownloadURL(uploadTask.snapshot.ref);
-                  resolve({ name: file.name, url });
-                } catch (urlErr) {
-                  reject(urlErr);
-                }
-              }
-            );
-          });
-        });
+        console.log(`Starting sequential upload of ${files.length} files...`);
+        const newDocs: { name: string, url: string }[] = [];
         
-        const newDocs = await Promise.all(uploadPromises);
+        for (const file of Array.from(files) as File[]) {
+          setUploadProgress(prev => ({ ...prev, [file.name]: 10 })); // Show initial progress
+          const storageRef = ref(storage, `plots/${plotId}/${file.name}`);
+          
+          // Use uploadBytes for faster, non-resumable upload of small files
+          const result = await uploadBytes(storageRef, file);
+          const url = await getDownloadURL(result.ref);
+          
+          setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
+          newDocs.push({ name: file.name, url });
+        }
+        
         documents = [...documents, ...newDocs];
         console.log("All files uploaded successfully");
       }
@@ -952,12 +939,13 @@ export default function AdminDashboard() {
                             <input
                               type="file"
                               multiple
+                              accept="image/*"
                               className="sr-only"
                               onChange={(e) => setFiles(e.target.files)}
                             />
                           </label>
                         </div>
-                        <p className="text-xs text-neutral-500">PDF, Images up to 10MB</p>
+                        <p className="text-xs text-neutral-500">Images only up to 10MB</p>
                       </div>
                     </div>
                     {files && files.length > 0 && (

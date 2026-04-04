@@ -111,7 +111,7 @@ export default function SharedPlotView() {
             <>
               <h1 className="text-xl font-bold flex items-center gap-2">
                 <MapPin className="text-orange-500" />
-                {selectedPlot.societyName ? `${selectedPlot.societyName} - ${selectedPlot.unitNumber || ''}` : (selectedPlot.locality || 'Land Details')}
+                {selectedPlot.locality || 'Property Details'}
               </h1>
               <div className="flex flex-wrap gap-2 mt-2">
                 {selectedPlot.locality && (
@@ -239,7 +239,7 @@ export default function SharedPlotView() {
               >
                 <div className="font-medium p-1 min-w-[150px]">
                   <div className="font-bold text-blue-600 mb-1">
-                    {selectedPlot.societyName || selectedPlot.locality || 'Property'}
+                    {selectedPlot.locality || 'Property'}
                   </div>
                   <div className="text-xs text-neutral-600">
                     {selectedPlot.size} Sqyd • ₹{selectedPlot.totalPrice}
